@@ -155,7 +155,13 @@ function setupKeepAlive() {
     if (pingInterval) clearInterval(pingInterval);
     pingInterval = setInterval(() => {
         if (!isConnected) return;
+        // Standard ping
         safeSend(["7", "MiniGame", "1", Math.floor(Date.now() / 1000)]);
+
+        // Periodic subscription refresh to ensure data keeps coming
+        setTimeout(() => {
+            safeSend([6, "MiniGame", "taixiuPlugin", { cmd: 1005 }]);
+        }, 5000);
     }, 15000);
 }
 
