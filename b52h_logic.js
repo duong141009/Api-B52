@@ -100,7 +100,8 @@ function connectWebSocket() {
         lastActivityTime = Date.now();
         try {
             const json = JSON.parse(data);
-            if (Array.isArray(json) && json[1]?.htr) {
+            // Only process messages from Hũ (taixiuPlugin - cmd 1005)
+            if (Array.isArray(json) && json[1]?.htr && json[1]?.cmd === 1005) {
                 const htr = json[1].htr;
                 const latest = htr[htr.length - 1];
 
@@ -174,8 +175,8 @@ function simulateHumanBehavior() {
         if (!isConnected) return;
         if (Math.random() < 0.3) {
             const actions = [
-                [6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }],
                 [6, "MiniGame", "taixiuPlugin", { cmd: 1005 }],
+                [6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }],
                 [6, "MiniGame", "lobbyPlugin", { cmd: 10001 }]
             ];
             const action = actions[getRandomInt(0, actions.length - 1)];
