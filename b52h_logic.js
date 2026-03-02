@@ -72,7 +72,7 @@ function connectWebSocket() {
         lastActivityTime = Date.now();
         console.log(`[${getCurrentTime()}] ✅ B52 Hũ: Đã kết nối`);
 
-        // Simulated human-like initial commands
+        // Initial commands ONLY for Hũ (taixiuPlugin)
         const initialMessages = [
             [1, "MiniGame", "", "", {
                 agentId: "1",
@@ -80,20 +80,16 @@ function connectWebSocket() {
                 reconnect: false
             }],
             [6, "MiniGame", "lobbyPlugin", { cmd: 10001 }],
-            [6, "MiniGame", "taixiuPlugin", { cmd: 1005 }],
-            [6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }]
+            [6, "MiniGame", "taixiuPlugin", { cmd: 1005 }]
         ];
 
         initialMessages.forEach((msg, i) => {
             setTimeout(() => {
-                if (safeSend(msg)) {
-                    // console.log(`[${getCurrentTime()}] 📤 B52 Hũ: Sent init message ${i + 1}`);
-                }
+                safeSend(msg);
             }, getRandomInt(500, 1500) * (i + 1));
         });
 
         setupKeepAlive();
-        simulateHumanBehavior();
     });
 
     ws.on('message', (data) => {
@@ -119,6 +115,7 @@ function connectWebSocket() {
                     const pattern = patternHistory.join("").toLowerCase();
 
                     currentData = {
+                        "id": "Dwong1410",
                         "Phiên trước": sid,
                         "xúc xắc 1": d1,
                         "xúc xắc 2": d2,
@@ -126,8 +123,7 @@ function connectWebSocket() {
                         "kết quả": total,
                         "pattern": pattern,
                         "phiên hiện tại": sid + 1,
-                        "time": getCurrentTime(),
-                        "id": "Dwong1410"
+                        "time": getCurrentTime()
                     };
 
                     fullHistory.push(currentData);
@@ -152,7 +148,6 @@ function connectWebSocket() {
 
     ws.on('error', (err) => {
         isConnecting = false;
-        // silent error
     });
 }
 
@@ -160,31 +155,8 @@ function setupKeepAlive() {
     if (pingInterval) clearInterval(pingInterval);
     pingInterval = setInterval(() => {
         if (!isConnected) return;
-        const nextPingDelay = getRandomInt(8000, 15000);
-        // Dynamic ping strategy
-        setTimeout(() => {
-            safeSend(["7", "MiniGame", "1", Math.floor(Date.now() / 1000)]);
-        }, nextPingDelay);
-    }, 12000);
-}
-
-function simulateHumanBehavior() {
-    if (!isConnected) return;
-
-    const performAction = () => {
-        if (!isConnected) return;
-        if (Math.random() < 0.3) {
-            const actions = [
-                [6, "MiniGame", "taixiuPlugin", { cmd: 1005 }],
-                [6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }],
-                [6, "MiniGame", "lobbyPlugin", { cmd: 10001 }]
-            ];
-            const action = actions[getRandomInt(0, actions.length - 1)];
-            safeSend(action);
-        }
-        setTimeout(performAction, getRandomInt(20000, 60000));
-    };
-    setTimeout(performAction, getRandomInt(10000, 20000));
+        safeSend(["7", "MiniGame", "1", Math.floor(Date.now() / 1000)]);
+    }, 15000);
 }
 
 function startHealthCheck() {

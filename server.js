@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 
-// Import dedicated B52 logic
+// Import logic files as requested
 const b52h = require('./b52h_logic');
 const b52md5 = require('./b52md5_logic');
 
@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
     res.send(`
         <html>
             <head>
-                <title>B52 Dedicated API</title>
+                <title>B52 Dedicated API (Hybrid)</title>
                 <style>
                     body { font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 40px; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
                     .card { max-width: 600px; width: 100%; background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #334155; }
@@ -57,14 +57,14 @@ app.get('/', (req, res) => {
                 <div class="card">
                     <h1>🚀 B52 Dedicated API</h1>
                     <div class="group">
-                        <h2>💎 B52 Hũ <span class="badge">WebSocket</span></h2>
+                        <h2>💎 B52 Hũ <span class="badge">WebSocket (Live)</span></h2>
                         <ul>
                             <li><a href="/api/b52h/taixiu">Dữ liệu hiện tại</a></li>
                             <li><a href="/api/b52h/history?limit=100">Lịch sử (Max 300)</a></li>
                         </ul>
                     </div>
                     <div class="group">
-                        <h2>🛡️ B52 MD5 <span class="badge">GET API</span></h2>
+                        <h2>🛡️ B52 MD5 <span class="badge">Public GET API</span></h2>
                         <ul>
                             <li><a href="/api/b52md5/taixiu">Dữ liệu hiện tại</a></li>
                             <li><a href="/api/b52md5/history?limit=100">Lịch sử (Max 300)</a></li>
@@ -82,7 +82,7 @@ app.get('/', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`[🚀] B52 Dedicated Server running http://0.0.0.0:${PORT}`);
 
-    // Init logic
+    // Init BOTH modules separately
     b52h.startConnection();
     b52md5.startConnection();
 
