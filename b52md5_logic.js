@@ -4,7 +4,7 @@ function getCurrentTime() {
     return new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false });
 }
 
-// Lưu lịch sử để tạo pattern
+// History tracking
 let history = [];
 let fullHistory = [];
 
@@ -50,13 +50,10 @@ function updateResult(d1, d2, d3, sid = null) {
         fullHistory.push(latestResult);
         if (fullHistory.length > 300) fullHistory.shift();
 
-        console.log(
-            `[🎲✅] B52 MD5: Phiên ${latestResult["Phiên trước"]} ➜ ${d1}-${d2}-${d3} = ${total} | ${timeStr}`
-        );
+        console.log(`[${getCurrentTime()}] 🎲 B52 MD5: Phiên ${latestResult["Phiên trước"]} ➜ ${d1}-${d2}-${d3} = ${total}`);
     }
 }
 
-// API gốc B52
 const API_TARGET_URL = 'https://jakpotgwab.geightdors.net/glms/v1/notify/taixiu?platform_id=b5&gid=vgmn_101';
 
 async function fetchGameData() {
@@ -76,27 +73,22 @@ async function fetchGameData() {
             }
         }
     } catch (error) {
-        // console.error("❌ Lỗi khi lấy dữ liệu từ B52 MD5 API:", error.message);
+        // console.error("❌ B52 MD5: API error", error.message);
     }
 }
 
-// Exports cho server.js
 module.exports = {
     getCurrentData: () => latestResult,
     getHistory: (limitStr) => {
-        let limit = fullHistory.length;
+        let limit = 300;
         if (limitStr) {
-            const parsedLimit = parseInt(limitStr);
-            if (!isNaN(parsedLimit) && parsedLimit > 0) {
-                limit = Math.min(parsedLimit, 300, fullHistory.length);
-            }
-        } else {
-            limit = Math.min(300, fullHistory.length);
+            const parsed = parseInt(limitStr);
+            if (!isNaN(parsed) && parsed > 0) limit = Math.min(parsed, 300);
         }
         return fullHistory.slice(-limit);
     },
     startConnection: () => {
-        console.log(`[🚀] Khởi tạo kết nối B52 MD5...`);
+        console.log(`[${getCurrentTime()}] 🚀 B52 MD5: Đã khởi tạo`);
         setInterval(fetchGameData, 5000);
         fetchGameData();
     }

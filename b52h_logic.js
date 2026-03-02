@@ -20,7 +20,7 @@ let currentSid = null;
 let currentData = null;
 const processedSid = new Set();
 
-// Memory management: Clear sets every 1 hour to prevent leaks
+// Memory management
 setInterval(() => {
     processedSid.clear();
 }, 6 * 60 * 60 * 1000);
@@ -56,46 +56,48 @@ function connectWebSocket() {
     isConnecting = true;
     reconnectAttempts++;
 
-    // Create new connection
     ws = new WebSocket("wss://minybordergs.weskb5gams.net/websocket", {
         headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Origin": "https://i.b52.club",
             "Host": "minybordergs.weskb5gams.net",
             "X-Client-Fingerprint": generateFingerprint()
         }
     });
 
-    // Connection established
     ws.on('open', () => {
         isConnected = true;
         isConnecting = false;
         reconnectAttempts = 0;
         lastActivityTime = Date.now();
-        console.log(`[${getCurrentTime()}] ✅ B52 Hũ kết nối thành công`);
+        console.log(`[${getCurrentTime()}] ✅ B52 Hũ: Đã kết nối`);
 
+        // Simulated human-like initial commands
         const initialMessages = [
             [1, "MiniGame", "", "", {
                 agentId: "1",
                 accessToken: ACCESS_TOKEN,
                 reconnect: false
             }],
+            [6, "MiniGame", "lobbyPlugin", { cmd: 10001 }],
+            [6, "MiniGame", "taixiuPlugin", { cmd: 1005 }],
             [6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }]
         ];
 
         initialMessages.forEach((msg, i) => {
             setTimeout(() => {
-                safeSend(msg);
-            }, 500 * (i + 1));
+                if (safeSend(msg)) {
+                    // console.log(`[${getCurrentTime()}] 📤 B52 Hũ: Sent init message ${i + 1}`);
+                }
+            }, getRandomInt(500, 1500) * (i + 1));
         });
 
         setupKeepAlive();
+        simulateHumanBehavior();
     });
 
-    // Message received
     ws.on('message', (data) => {
         lastActivityTime = Date.now();
-
         try {
             const json = JSON.parse(data);
             if (Array.isArray(json) && json[1]?.htr) {
@@ -113,7 +115,6 @@ function connectWebSocket() {
 
                     patternHistory.push(resultChar);
                     if (patternHistory.length > 20) patternHistory.shift();
-
                     const pattern = patternHistory.join("").toLowerCase();
 
                     currentData = {
@@ -131,68 +132,81 @@ function connectWebSocket() {
                     fullHistory.push(currentData);
                     if (fullHistory.length > 300) fullHistory.shift();
 
-                    console.log(`[${getCurrentTime()}] 🎲 B52 Hũ: Phiên ${sid} ➜ ${d1}-${d2}-${d3} = ${total}`);
+                    console.log(`[${getCurrentTime()}] 🎲 B52 Hũ: Phiên ${sid} ➜ ${d1}-${d2}-${d3} = ${total} (${resultChar})`);
                 }
             }
         } catch (e) {
-            console.log(`[${getCurrentTime()}] ❌ Lỗi xử lý message:`, e.message);
+            console.error(`[${getCurrentTime()}] ❌ B52 Hũ: Message error`, e.message);
         }
     });
 
-    // Connection closed
     ws.on('close', () => {
         isConnected = false;
         isConnecting = false;
         if (pingInterval) clearInterval(pingInterval);
-        const delay = Math.min(15000, 2000 * Math.pow(2, reconnectAttempts));
+        const delay = Math.min(30000, 2000 * Math.pow(2, reconnectAttempts));
         reconnectTimeout = setTimeout(connectWebSocket, delay);
+        console.log(`[${getCurrentTime()}] ⚠️ B52 Hũ: Mất kết nối, thử lại sau ${delay / 1000}s`);
     });
 
-    // Connection error
     ws.on('error', (err) => {
         isConnecting = false;
+        // silent error
     });
 }
 
-// Keep-alive mechanism
 function setupKeepAlive() {
     if (pingInterval) clearInterval(pingInterval);
-
-    let counter = 1;
     pingInterval = setInterval(() => {
         if (!isConnected) return;
-        safeSend(["7", "MiniGame", "1", counter++]);
-        if (counter % 3 === 0) {
-            safeSend([6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }]);
+        const nextPingDelay = getRandomInt(8000, 15000);
+        // Dynamic ping strategy
+        setTimeout(() => {
+            safeSend(["7", "MiniGame", "1", Math.floor(Date.now() / 1000)]);
+        }, nextPingDelay);
+    }, 12000);
+}
+
+function simulateHumanBehavior() {
+    if (!isConnected) return;
+
+    const performAction = () => {
+        if (!isConnected) return;
+        if (Math.random() < 0.3) {
+            const actions = [
+                [6, "MiniGame", "taixiuKCBPlugin", { cmd: 2000 }],
+                [6, "MiniGame", "taixiuPlugin", { cmd: 1005 }],
+                [6, "MiniGame", "lobbyPlugin", { cmd: 10001 }]
+            ];
+            const action = actions[getRandomInt(0, actions.length - 1)];
+            safeSend(action);
+        }
+        setTimeout(performAction, getRandomInt(20000, 60000));
+    };
+    setTimeout(performAction, getRandomInt(10000, 20000));
+}
+
+function startHealthCheck() {
+    setInterval(() => {
+        if (isConnected && Date.now() - lastActivityTime > 45000) {
+            console.log(`[${getCurrentTime()}] 🚨 B52 Hũ: No activity, reconnecting...`);
+            if (ws) ws.terminate();
         }
     }, 10000);
 }
 
-// Exports cho server.js
 module.exports = {
-    getCurrentData: () => currentData || {
-        status: "waiting",
-        message: "Đang chờ dữ liệu B52 Hũ...",
-        time: getCurrentTime()
-    },
+    getCurrentData: () => currentData || { status: "waiting", time: getCurrentTime() },
     getHistory: (limitStr) => {
-        let limit = fullHistory.length;
+        let limit = 300;
         if (limitStr) {
-            const parsedLimit = parseInt(limitStr);
-            if (!isNaN(parsedLimit) && parsedLimit > 0) {
-                limit = Math.min(parsedLimit, 300, fullHistory.length);
-            }
-        } else {
-            limit = Math.min(300, fullHistory.length);
+            const parsed = parseInt(limitStr);
+            if (!isNaN(parsed) && parsed > 0) limit = Math.min(parsed, 300);
         }
         return fullHistory.slice(-limit);
     },
     startConnection: () => {
         connectWebSocket();
-        setInterval(() => {
-            if (isConnected && Date.now() - lastActivityTime > 45000) {
-                if (ws) ws.terminate();
-            }
-        }, 10000);
+        startHealthCheck();
     }
 };

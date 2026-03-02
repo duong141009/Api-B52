@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 
-// Import logic files
+// Import dedicated B52 logic
 const b52h = require('./b52h_logic');
 const b52md5 = require('./b52md5_logic');
 
@@ -31,69 +31,68 @@ app.get('/api/b52md5/history', (req, res) => {
     res.json(b52md5.getHistory(limit));
 });
 
-// Màn hình chính
+// Landing Page
 app.get('/', (req, res) => {
     res.send(`
         <html>
             <head>
-                <title>B52 API Tool</title>
+                <title>B52 Dedicated API</title>
                 <style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; padding: 20px; background: #0f172a; color: #f8fafc; }
-                    .container { max-width: 650px; margin: 50px auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #334155; }
-                    h1 { color: #38bdf8; text-align: center; margin-bottom: 30px; font-size: 2rem; }
-                    .group { margin-bottom: 25px; padding: 20px; background: #334155; border-radius: 8px; border-left: 5px solid #38bdf8; }
-                    h2 { color: #f1f5f9; margin-top: 0; font-size: 1.25rem; }
-                    ul { list-style: none; padding: 0; }
-                    li { margin-bottom: 10px; }
-                    a { color: #38bdf8; text-decoration: none; font-weight: 500; transition: color 0.2s; }
-                    a:hover { color: #7dd3fc; text-decoration: underline; }
-                    .status { font-size: 0.875rem; color: #94a3b8; text-align: center; margin-top: 20px; }
+                    body { font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 40px; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+                    .card { max-width: 600px; width: 100%; background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #334155; }
+                    h1 { color: #38bdf8; text-align: center; margin-bottom: 30px; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.025em; }
+                    .group { margin-bottom: 24px; padding: 20px; background: #334155; border-radius: 12px; border-left: 6px solid #38bdf8; transition: transform 0.2s; }
+                    .group:hover { transform: translateX(5px); }
+                    h2 { color: #f1f5f9; margin-top: 0; font-size: 1.4rem; font-weight: 700; }
+                    ul { list-style: none; padding: 0; margin: 15px 0 0 0; }
+                    li { margin-bottom: 12px; display: flex; align-items: center; }
+                    li::before { content: "→"; color: #38bdf8; margin-right: 10px; font-weight: bold; }
+                    a { color: #38bdf8; text-decoration: none; font-weight: 600; font-size: 1.05rem; transition: color 0.15s; }
+                    a:hover { color: #7dd3fc; }
+                    .footer { font-size: 0.875rem; color: #94a3b8; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; }
+                    .badge { background: #0ea5e9; color: white; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; margin-left: 8px; vertical-align: middle; font-weight: bold; }
                 </style>
             </head>
             <body>
-                <div class="container">
-                    <h1>🚀 B52 Consolidated API</h1>
+                <div class="card">
+                    <h1>🚀 B52 Dedicated API</h1>
                     <div class="group">
-                        <h2>💎 B52 Hũ (WebSocket)</h2>
+                        <h2>💎 B52 Hũ <span class="badge">WebSocket</span></h2>
                         <ul>
                             <li><a href="/api/b52h/taixiu">Dữ liệu hiện tại</a></li>
-                            <li><a href="/api/b52h/history?limit=100">Lịch sử (100 phiên)</a></li>
+                            <li><a href="/api/b52h/history?limit=100">Lịch sử (Max 300)</a></li>
                         </ul>
                     </div>
                     <div class="group">
-                        <h2>🛡️ B52 MD5 (GET API)</h2>
+                        <h2>🛡️ B52 MD5 <span class="badge">GET API</span></h2>
                         <ul>
                             <li><a href="/api/b52md5/taixiu">Dữ liệu hiện tại</a></li>
-                            <li><a href="/api/b52md5/history?limit=100">Lịch sử (100 phiên)</a></li>
+                            <li><a href="/api/b52md5/history?limit=100">Lịch sử (Max 300)</a></li>
                         </ul>
                     </div>
-                    <div class="status">ID: Dwong1410 | Status: Online</div>
+                    <div class="footer">
+                        ID: Dwong1410 • Status: <span style="color: #22c55e;">Online</span> • Render Ready
+                    </div>
                 </div>
             </body>
         </html>
     `);
 });
 
-app.listen(PORT, () => {
-    console.log(`[🚀] B52 API Server đang chạy tại http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[🚀] B52 Dedicated Server running http://0.0.0.0:${PORT}`);
 
-    // Khởi động kết nối
+    // Init logic
     b52h.startConnection();
     b52md5.startConnection();
 
-    // Tự ping để chống ngủ (Render)
+    // Auto-ping cron (for Render high availability)
     const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
     if (RENDER_EXTERNAL_URL) {
         setInterval(() => {
             axios.get(RENDER_EXTERNAL_URL)
-                .then(res => {
-                    console.log(`[📡] Tự ping (status: ${res.status})`);
-                })
-                .catch(err => {
-                    console.error('[⚠️] Lỗi tự ping:', err.message);
-                });
-        }, 5 * 60 * 1000); // 5 phút/lần
-    } else {
-        console.log('[ℹ️] Cấu hình RENDER_EXTERNAL_URL tại Render để server không bị ngủ.');
+                .then(res => console.log(`[📡] Render Keep-Alive: OK (${res.status})`))
+                .catch(err => console.error('[⚠️] Render Keep-Alive: Error', err.message));
+        }, 5 * 60 * 1000); // 5 mins
     }
 });
